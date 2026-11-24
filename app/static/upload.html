@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#09318D">
+<title>Fájlok küldése · xdrop</title>
+<link rel="stylesheet" href="/static/style.css?v=5">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="logo" href="/" aria-label="xdrop">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3"/><path d="m7 10 5 5 5-5"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
+      <b>x<span>drop</span></b>
+    </a>
+    <div class="nav-c">fájlküldés</div>
+    <div></div>
+  </header>
+
+  <section class="hero">
+    <h1 id="title" class="rv">Betöltés…</h1>
+    <p class="sub rv" style="--d:.15s" id="meta"></p>
+  </section>
+
+  <div id="main" class="hidden">
+    <div class="frame rv" style="--d:.25s">
+      <div class="inner dark">
+        <div id="drop" class="drop" tabindex="0" role="button" aria-label="Fájlok kiválasztása vagy ide húzása">
+          <div class="orb">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+            <span>Tallózás</span>
+          </div>
+          <div class="big">Húzd ide a fájlokat vagy mappákat</div>
+          <div class="muted">nincs fájlméret-korlát · a mappaszerkezet megmarad</div>
+          <input id="picker" type="file" multiple class="hidden">
+        </div>
+      </div>
+    </div>
+    <div class="queue-wrap hidden">
+      <h2>Feltöltések</h2>
+      <div class="frame list"><div class="inner light" id="queue"></div></div>
+      <p class="hint">Ne zárd be az oldalt, amíg minden fájl el nem készül. Megszakadt kapcsolatnál a feltöltés magától folytatódik.</p>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="/static/bg.js?v=5"></script>
+<script src="/static/uploader.js?v=5"></script>
+<script>
+const token = location.pathname.split('/').filter(Boolean)[1] || '';
+extraHeaders['X-Upload-Token'] = token;
+(async () => {
+  let info;
+  try { info = await api('GET', '/api/upload/' + encodeURIComponent(token)); }
+  catch (e) {
+    $('#title').textContent = 'Ez a link már nem él.';
+    $('#meta').textContent = 'A feltöltési link nem érvényes vagy lejárt. Kérj újat attól, aki küldte.';
+    return;
+  }
+  $('#title').textContent = info.note || 'Küldj fájlokat';
+  $('#meta').textContent = 'A fájlok egyenesen a link tulajdonosához kerülnek.' +
+    (info.expires ? ' A link érvényes eddig: ' + fmtDate(info.expires) + '.' : '');
+  if (!info.storage) { $('#meta').textContent = 'A tárhely most nem elérhető, próbáld később.'; return; }
+  $('#main').classList.remove('hidden');
+  setupUploader({ drop: $('#drop'), picker: $('#picker'), queue: $('#queue'), getShareId: async () => info.share_id });
+})();
+</script>
+</body>
+</html>

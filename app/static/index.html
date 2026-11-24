@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#09318D">
+<title>xdrop</title>
+<link rel="stylesheet" href="/static/style.css?v=5">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="logo" href="/" aria-label="xdrop kezdőlap">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3"/><path d="m7 10 5 5 5-5"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
+      <b>x<span>drop</span></b>
+    </a>
+    <div class="nav-c" id="host"></div>
+    <div class="nav-r">
+      <span id="free"></span>
+      <button id="logout" class="btn ghost hidden">Kilépés</button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="tags rv">
+      <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5v6a3 3 0 0 0 3 3h13"/><path d="m16 10 4 4-4 4"/></svg>Darabolt feltöltés</span>
+      <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5v6a3 3 0 0 0 3 3h13"/><path d="m16 10 4 4-4 4"/></svg>Folytatható</span>
+      <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5v6a3 3 0 0 0 3 3h13"/><path d="m16 10 4 4-4 4"/></svg>Lejáró linkek</span>
+    </div>
+    <h1><span class="w" style="--i:0">Fájlok,</span> <em class="w" style="--i:1">bármekkora</em><span class="badge pink" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg></span><br><span class="badge glass" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg></span> <span class="w" style="--i:2">méretben.</span></h1>
+    <p class="sub rv" style="--d:.35s">Húzd be, és kapsz egy linket. Nincs méretkorlát, megszakadt kapcsolatnál a feltöltés ott folytatódik, ahol abbamaradt.</p>
+  </section>
+
+  <section id="login" class="login hidden rv">
+    <div class="frame"><div class="inner dark">
+      <form id="loginForm">
+        <div class="title">Belépés</div>
+        <input id="pw" type="password" placeholder="Jelszó" autocomplete="current-password">
+        <div class="err" id="loginErr"></div>
+        <button type="submit">Belépés</button>
+      </form>
+    </div></div>
+  </section>
+
+  <main id="app" class="hidden">
+    <div class="frame rv" style="--d:.45s">
+      <div class="inner dark">
+        <div id="drop" class="drop" tabindex="0" role="button" aria-label="Fájlok kiválasztása vagy ide húzása">
+          <div class="orb">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+            <span>Tallózás</span>
+          </div>
+          <div class="big">Húzd ide a fájlokat vagy mappákat</div>
+          <div class="muted">nincs fájlméret-korlát · a mappaszerkezet megmarad</div>
+          <input id="picker" type="file" multiple class="hidden">
+        </div>
+        <div class="options">
+          <input id="note" placeholder="Megjegyzés (opcionális), pl. „Nyaralás videók”" maxlength="200" aria-label="Megjegyzés">
+          <select id="expiry" aria-label="Lejárat">
+            <option value="1">Lejár: 1 nap</option>
+            <option value="7" selected>Lejár: 7 nap</option>
+            <option value="30">Lejár: 30 nap</option>
+            <option value="">Soha nem jár le</option>
+          </select>
+        </div>
+        <div class="req">
+          <div class="grow">Fájlokat kérnél valakitől? Készíts neki feltöltési linket.</div>
+          <button class="ghost" id="requestBtn">Feltöltési link készítése</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="current" class="hidden queue-wrap">
+      <div class="tkw" id="ticketWrap">
+        <div class="ticket">
+          <div class="tk-main">
+            <div class="tk-label" id="curLabel">Megosztás</div>
+            <div class="tk-link"><span id="curLink"></span><span class="dom" id="curHost"></span></div>
+            <div class="burn" id="curBurn"><i></i><b></b></div>
+            <div class="tk-row">
+              <div class="info" id="curInfo"></div>
+              <button class="ghost" id="newShare">Új megosztás</button>
+              <button id="copyCur">Link másolása</button>
+            </div>
+          </div>
+          <div class="tk-stub"><div class="pm" id="curStamp"></div></div>
+        </div>
+      </div>
+      <div class="qsec">
+        <h2>Feltöltések</h2>
+        <div class="frame list"><div class="inner light" id="queue"></div></div>
+      </div>
+    </div>
+
+    <h2>Megosztásaim</h2>
+    <div class="frame list"><div class="inner light" id="shares"><div class="empty">Betöltés…</div></div></div>
+  </main>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="/static/bg.js?v=5"></script>
+<script src="/static/uploader.js?v=5"></script>
+<script>
+document.getElementById('host').textContent = location.host;
+const shareUrl = id => location.origin + '/s/' + id;
+const uploadUrl = tok => location.origin + '/u/' + tok;
+let current = null;
+const fmtShort = ts => new Date(ts * 1000).toLocaleString('hu-HU', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+function fmtLeft(sec) {
+  if (sec <= 0) return 'lejárt';
+  const d = Math.floor(sec / 86400), h = Math.floor(sec % 86400 / 3600), m = Math.floor(sec % 3600 / 60);
+  if (d) return `még ${d} nap${h ? ' ' + h + ' óra' : ''}`;
+  if (h) return `még ${h} óra${m ? ' ' + m + ' perc' : ''}`;
+  return `még ${Math.max(1, m)} perc`;
+}
+
+async function boot() {
+  const me = await api('GET', '/api/me');
+  $('#login').classList.toggle('hidden', me.admin);
+  $('#app').classList.toggle('hidden', !me.admin);
+  $('#logout').classList.toggle('hidden', !me.admin || me.open);
+  $('#free').textContent = me.free != null ? fmtBytes(me.free) + ' szabad' : (me.admin ? 'A tárhely most nem elérhető' : '');
+  if (me.admin) loadShares(); else $('#pw').focus();
+}
+$('#loginForm').onsubmit = async e => {
+  e.preventDefault(); $('#loginErr').textContent = '';
+  try { await api('POST', '/api/login', { password: $('#pw').value }); $('#pw').value = ''; boot(); }
+  catch (err) { $('#loginErr').textContent = err.message; }
+};
+$('#logout').onclick = async () => { await api('POST', '/api/logout'); boot(); };
+
+function newShareBody(extra) {
+  const days = $('#expiry').value;
+  return { note: $('#note').value.trim(), expires_days: days ? Number(days) : null, ...extra };
+}
+
+async function loadShares() {
+  let shares;
+  try { shares = await api('GET', '/api/shares'); } catch (e) { if (e.status === 401) return boot(); throw e; }
+  const box = $('#shares'); box.replaceChildren();
+  if (!shares.length) { box.append(el('div', 'empty', 'Még nincs megosztásod.')); return; }
+  shares.forEach((s, i) => {
+    const done = s.files.filter(f => f.status === 'done');
+    const uploading = s.files.length - done.length;
+    const fromFriends = done.filter(f => f.by_friend).length;
+    const total = done.reduce((a, f) => a + f.size, 0);
+    const it = el('div', 'item'), row = el('div', 'row'), info = el('div', 'grow');
+    it.style.animationDelay = Math.min(i, 12) * 45 + 'ms';
+    const title = s.note || (done[0] ? done[0].name + (done.length > 1 ? ` + ${done.length - 1} további` : '') : 'Üres megosztás');
+    info.append(el('div', 'name', title));
+    const meta = [`${done.length} fájl`, fmtBytes(total), fmtShort(s.created),
+      s.expires ? 'lejár ' + fmtShort(s.expires) : 'nem jár le'];
+    if (uploading) meta.push(`${uploading} feltöltés alatt`);
+    if (fromFriends) meta.push(`${fromFriends} baráttól`);
+    if (s.upload_token) meta.push('feltöltési link aktív');
+    info.append(el('div', 'small', meta.join(' · ')));
+    const open = el('a', 'btn ghost', 'Megnyitás'); open.href = '/s/' + s.id; open.target = '_blank'; open.rel = 'noopener';
+    const cp = el('button', '', 'Link'); cp.title = 'Letöltési link másolása'; cp.onclick = () => copy(shareUrl(s.id));
+    const up = el('button', 'ghost', s.upload_token ? 'Feltöltési link' : 'Feltöltés engedése');
+    up.title = 'Link, amivel mások ebbe a megosztásba tölthetnek fel';
+    up.onclick = async () => {
+      const r = s.upload_token ? s : await api('PATCH', '/api/shares/' + s.id, { allow_upload: true });
+      copy(uploadUrl(r.upload_token), 'Feltöltési link kimásolva'); loadShares();
+    };
+    const more = el('button', 'ghost', '…'); more.title = 'Továbbiak'; more.setAttribute('aria-label', 'Továbbiak');
+    more.onclick = () => {
+      const act = prompt('Mit csináljunk?\n1 = további fájlok hozzáadása innen\n2 = feltöltési link letiltása\n3 = lejárat módosítása (napok, üres = soha)', '1');
+      if (act === '1') { setCurrent(s.id, s.expires, s.created, false, s.note); window.scrollTo({ top: 0, behavior: 'smooth' }); toast('Az új fájlok ide kerülnek'); }
+      if (act === '2') api('PATCH', '/api/shares/' + s.id, { allow_upload: false }).then(loadShares);
+      if (act === '3') {
+        const d = prompt('Hány nap múlva járjon le? (üres = soha)', '7');
+        if (d !== null) api('PATCH', '/api/shares/' + s.id, { expires_days: d.trim() ? Number(d) : null }).then(r => {
+          if (current && current.id === s.id) setCurrent(s.id, r.expires, s.created, true, s.note);
+          loadShares();
+        });
+      }
+    };
+    const del = el('button', 'danger', 'Törlés');
+    del.onclick = async () => {
+      if (!confirm('Biztosan törlöd? A fájlok véglegesen törlődnek a tárhelyről.')) return;
+      await api('DELETE', '/api/shares/' + s.id);
+      if (current && current.id === s.id) resetCurrent(true);
+      loadShares(); boot();
+    };
+    row.append(info, open, cp, up, more, del); it.append(row); box.append(it);
+  });
+}
+
+// The current share is drawn as a paper ticket: a stamp with the expiry date and an
+// ember line that burns down as the share approaches expiry.
+function setCurrent(id, expires, created, quiet, note) {
+  const fresh = !current || current.id !== id;
+  current = { id, expires, created: created || Math.floor(Date.now() / 1000) };
+  $('#current').classList.remove('hidden');
+  $('#curLink').textContent = id;
+  $('#curHost').textContent = location.host + '/s/';
+  $('#curLabel').textContent = note ? 'Megosztás · ' + note : 'Megosztás';
+  paintTicket();
+  if (fresh && !quiet) {
+    const w = $('#ticketWrap'); w.classList.remove('tk-anim'); void w.offsetWidth; w.classList.add('tk-anim');
+  }
+}
+function paintTicket() {
+  if (!current) return;
+  const { expires, created } = current, now = Date.now() / 1000;
+  const stamp = $('#curStamp'); stamp.replaceChildren();
+  if (expires) {
+    const d = new Date(expires * 1000);
+    stamp.append(el('span', '', 'lejár'),
+      el('strong', '', d.toLocaleString('hu-HU', { month: '2-digit', day: '2-digit' })),
+      el('strong', '', d.toLocaleString('hu-HU', { hour: '2-digit', minute: '2-digit' })));
+    const f = Math.max(0, Math.min(1, (expires - now) / Math.max(1, expires - created)));
+    $('#curBurn').style.setProperty('--f', f.toFixed(4));
+    const left = fmtLeft(expires - now);
+    $('#curInfo').textContent = left.charAt(0).toUpperCase() + left.slice(1) + ' · ' + fmtShort(expires);
+  } else {
+    stamp.append(el('span', '', 'érvényes'), el('strong', '', '∞'), el('span', '', 'örökké'));
+    $('#curBurn').style.setProperty('--f', '1');
+    $('#curInfo').textContent = 'Nem jár le';
+  }
+}
+setInterval(paintTicket, 30000);
+function resetCurrent(force) {
+  if (!force && document.querySelector('#queue .item:not(.done):not(.failed)') &&
+      !confirm('Még folyik feltöltés. Új megosztást kezdesz? (a futó feltöltések folytatódnak)')) return;
+  current = null; $('#current').classList.add('hidden'); $('#queue').replaceChildren();
+}
+$('#copyCur').onclick = () => current && copy(shareUrl(current.id));
+$('#newShare').onclick = () => resetCurrent(false);
+$('#requestBtn').onclick = async () => {
+  const r = await api('POST', '/api/shares', newShareBody({ allow_upload: true }));
+  $('#note').value = '';
+  copy(uploadUrl(r.upload_token), 'Feltöltési link kimásolva, küldd el annak, akitől fájlt kérsz');
+  loadShares();
+};
+
+setupUploader({
+  drop: $('#drop'), picker: $('#picker'), queue: $('#queue'),
+  async getShareId() {
+    if (current) return current.id;
+    const r = await api('POST', '/api/shares', newShareBody());
+    setCurrent(r.id, r.expires, null, false, $('#note').value.trim());
+    $('#note').value = '';
+    loadShares();
+    return r.id;
+  },
+  onIdle() { loadShares(); boot(); }
+});
+boot();
+</script>
+</body>
+</html>

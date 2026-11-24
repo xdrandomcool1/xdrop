@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#09318D">
+<title>Megosztott fájlok · xdrop</title>
+<link rel="stylesheet" href="/static/style.css?v=5">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="logo" href="/" aria-label="xdrop">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3"/><path d="m7 10 5 5 5-5"/><path d="M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
+      <b>x<span>drop</span></b>
+    </a>
+    <div class="nav-c">megosztás</div>
+    <div class="nav-r hidden" id="navAll"><span id="navTotal"></span></div>
+  </header>
+
+  <section class="hero">
+    <h1 id="title" class="rv">Betöltés…</h1>
+    <p class="sub rv" style="--d:.15s" id="meta"></p>
+  </section>
+
+  <h2 id="filesTitle" class="hidden">Fájlok</h2>
+  <div class="frame list hidden rv" style="--d:.25s" id="filesFrame"><div class="inner light" id="files"></div></div>
+  <p class="hint" id="hint"></p>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="/static/bg.js?v=5"></script>
+<script>
+const $ = s => document.querySelector(s);
+const id = location.pathname.split('/').filter(Boolean)[1];
+function fmtBytes(n) {
+  if (n < 1024) return n + ' B';
+  const u = ['KB', 'MB', 'GB', 'TB']; let i = -1;
+  do { n /= 1024; i++; } while (n >= 1024 && i < u.length - 1);
+  return n.toLocaleString('hu-HU', { maximumFractionDigits: n < 10 ? 1 : 0 }) + ' ' + u[i];
+}
+function fmtDate(ts) { return new Date(ts * 1000).toLocaleString('hu-HU', { dateStyle: 'medium', timeStyle: 'short' }); }
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 1800); }
+async function copy(text, msg) {
+  try { await navigator.clipboard.writeText(text); }
+  catch { const t = el('textarea'); t.value = text; document.body.append(t); t.select(); document.execCommand('copy'); t.remove(); }
+  toast(msg);
+}
+const fileUrl = name => '/dl/' + id + '/' + name.split('/').map(encodeURIComponent).join('/');
+let firstPaint = true;
+
+async function load() {
+  const r = await fetch('/api/public/shares/' + encodeURIComponent(id || ''));
+  if (!r.ok) {
+    $('#title').textContent = 'Ez a link már nem él.';
+    $('#meta').textContent = 'A megosztás nem létezik vagy lejárt. Kérj új linket attól, aki küldte.';
+    return;
+  }
+  const s = await r.json();
+  const ready = s.files.filter(f => f.ready);
+  const pending = s.files.length - ready.length;
+  const total = ready.reduce((a, f) => a + f.size, 0);
+  document.title = (s.note || 'Megosztott fájlok') + ' · xdrop';
+  $('#title').textContent = s.note || 'Megosztott fájlok';
+  $('#meta').textContent = `${ready.length} fájl · ${fmtBytes(total)}` +
+    (s.expires ? ` · elérhető eddig: ${fmtDate(s.expires)}` : '') +
+    (pending ? ` · még ${pending} fájl feltöltés alatt` : '');
+  $('#navAll').classList.toggle('hidden', !ready.length);
+  $('#navTotal').textContent = fmtBytes(total);
+  const box = $('#files'); box.replaceChildren();
+  $('#filesFrame').classList.toggle('hidden', !ready.length);
+  $('#filesTitle').classList.toggle('hidden', !ready.length);
+  ready.forEach((f, i) => {
+    const it = el('div', 'item'), row = el('div', 'row'), info = el('div', 'grow');
+    it.style.animationDelay = firstPaint ? Math.min(i, 12) * 45 + 300 + 'ms' : '0ms';
+    if (!firstPaint) it.style.animation = 'none';
+    info.append(el('div', 'name', f.name), el('div', 'small', fmtBytes(f.size)));
+    const cp = el('button', 'ghost', 'Link');
+    cp.title = 'Közvetlen letöltési link (wget, curl, letöltéskezelő)';
+    cp.onclick = () => copy(location.origin + fileUrl(f.name) + '?dl=1', 'Közvetlen link kimásolva');
+    const dl = el('a', 'btn', 'Letöltés'); dl.href = fileUrl(f.name) + '?dl=1'; dl.download = f.name.split('/').pop();
+    row.append(info, cp, dl); it.append(row); box.append(it);
+  });
+  firstPaint = false;
+  if (!ready.length && !pending) $('#meta').textContent = 'Ebben a megosztásban még nincs fájl.';
+  $('#hint').textContent = ready.length ? 'A letöltés folytatható (Range támogatott). Nagy fájlhoz érdemes letöltéskezelőt használni.' : '';
+  if (pending) setTimeout(load, 5000);
+}
+load();
+</script>
+</body>
+</html>
